@@ -16,8 +16,8 @@ public class InfiniteRechargeBall extends GamePieceOnFieldSimulation {
       new GamePieceInfo(
           "Ball",
           Geometry.createCircle(Units.inchesToMeters(14) / 2),
-          Inches.of(7),
-          Grams.of(142),
+          Inches.of(5.91),
+          Grams.of(215),
           3.5,
           5,
           0.3);
