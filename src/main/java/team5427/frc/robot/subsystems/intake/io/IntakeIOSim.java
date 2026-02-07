@@ -34,13 +34,10 @@ public class IntakeIOSim implements IntakeIO {
 
   private final IntakeSimulation intakeSimulation;
 
-  private LinearSystem<N2, N1, N2> pivotMotor;
   private LinearSystem<N1, N1, N1> rollerMotor;
 
-  private ProfiledPIDController pivotMotorProfiledPIDController;
   private PIDController rollerMotorPIDController;
 
-  private DCMotorSim pivotMotorSim;
   private FlywheelSim rollerMotorSim;
 
   public IntakeIOSim(Supplier<SwerveDriveSimulation> driveTrainSimulationSupplier) {
@@ -58,13 +55,6 @@ public class IntakeIOSim implements IntakeIO {
             IntakeSimulation.IntakeSide.FRONT,
             // The intake can hold up to 2 balls
             2);
-    pivotMotor =
-        LinearSystemId.createSingleJointedArmSystem(
-            IntakeConstants.kPivotMotorConfiguration.withFOC
-                ? DCMotor.getKrakenX60Foc(1)
-                : DCMotor.getKrakenX60(1),
-            0.01,
-            IntakeConstants.kPivotMotorConfiguration.gearRatio.getMathematicalGearRatio());
 
     rollerMotor =
         LinearSystemId.createFlywheelSystem(
@@ -74,35 +64,15 @@ public class IntakeIOSim implements IntakeIO {
             0.0005,
             IntakeConstants.kRollerMotorConfiguration.gearRatio.getMathematicalGearRatio());
 
-    pivotMotorProfiledPIDController =
-        new ProfiledPIDController(
-            IntakeConstants.kPivotMotorSimulatedkP,
-            0,
-            0,
-            new Constraints(
-                IntakeConstants.kPivotMotorConfiguration.maxVelocity,
-                IntakeConstants.kPivotMotorConfiguration.maxAcceleration));
-
     rollerMotorPIDController = new PIDController(IntakeConstants.kRollerMotorSimulatedkP, 0, 0);
 
-    pivotMotorSim = new DCMotorSim(pivotMotor, DCMotor.getKrakenX60Foc(1));
     rollerMotorSim = new FlywheelSim(rollerMotor, DCMotor.getKrakenX60Foc(1));
   }
 
   public void updateInputs(IntakeIOInputs inputs) {
-    inputs.pivotMotorConnected = true;
     inputs.rollerMotorConnected = true;
 
-    pivotMotorSim.update(Constants.kLoopSpeed);
     rollerMotorSim.update(Constants.kLoopSpeed);
-
-    inputs.pivotMotorAngularAcceleration = pivotMotorSim.getAngularAcceleration();
-    inputs.pivotMotorAngularVelocity = pivotMotorSim.getAngularVelocity();
-    inputs.pivotMotorCurrent = Amps.of(pivotMotorSim.getCurrentDrawAmps());
-    inputs.pivotMotorRotation =
-        Rotation2d.fromRotations(pivotMotorSim.getAngularPositionRotations());
-    inputs.pivotMotorTemperature = Celsius.of(30);
-    inputs.pivotMotorVoltage = Volts.of(pivotMotorSim.getInputVoltage());
 
     inputs.rollerMotorAngularAcceleration = rollerMotorSim.getAngularAcceleration();
     inputs.rollerMotorAngularVelocity = rollerMotorSim.getAngularVelocity();
@@ -121,32 +91,10 @@ public class IntakeIOSim implements IntakeIO {
     inputs.rollerMotorVoltage = Volts.of(rollerMotorSim.getInputVoltage());
   }
 
-  public void setPivotRotation(Rotation2d rotation) {
-    double inputVoltage =
-        pivotMotorProfiledPIDController.calculate(
-            pivotMotorSim.getAngularPositionRotations()
-                * IntakeConstants.kPivotMotorGearRatio.getMathematicalGearRatio(),
-            rotation.getRotations()
-                * IntakeConstants.kPivotMotorGearRatio.getMathematicalGearRatio());
-
-    pivotMotorSim.setInputVoltage(inputVoltage);
-  }
-
-  public void setPivotRotation(Angle rotation) {
-    double inputVoltage =
-        pivotMotorProfiledPIDController.calculate(
-            pivotMotorSim.getAngularPositionRotations()
-                * IntakeConstants.kPivotMotorGearRatio.getMathematicalGearRatio(),
-            rotation.in(Rotation)
-                * IntakeConstants.kPivotMotorGearRatio.getMathematicalGearRatio());
-
-    pivotMotorSim.setInputVoltage(inputVoltage);
-  }
-
   public void setRollerSpeed(LinearVelocity velocity) {
     double rotationsPerSecond =
         velocity.in(MetersPerSecond)
-            / (IntakeConstants.kPivotMotorConfiguration.finalDiameterMeters * Math.PI);
+            / (IntakeConstants.kRollerMotorConfiguration.finalDiameterMeters * Math.PI);
     double inputVoltage =
         rollerMotorPIDController.calculate(
             rollerMotorSim.getAngularVelocity().in(RotationsPerSecond)

@@ -79,13 +79,6 @@ public class IntakeSubsystem extends SubsystemBase {
       kIntakingSpeedOutOfBounds.set(false);
       io.setRollerSpeed(intakingSpeed);
     }
-    if (intakingAngle.getDegrees() > IntakeConstants.kPivotMaximumRotation.getDegrees()
-        || intakingAngle.getDegrees() < IntakeConstants.kPivotMinimumRotation.getDegrees()) {
-      kIntakingRotationOutOfBounds.set(true);
-    } else {
-      kIntakingRotationOutOfBounds.set(false);
-      io.setPivotRotation(intakingAngle);
-    }
     Logger.processInputs("Intake/Inputs", inputsAutoLogged);
     log();
   }
@@ -107,10 +100,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public void disableRollerMotor(boolean shouldDisable) {
     io.disableRollerMotor(shouldDisable);
-  }
-
-  public void disablePivotMotor(boolean shouldDisable) {
-    io.disablePivotMotor(shouldDisable);
   }
 
   public boolean isRollerMotorDisabled() {
